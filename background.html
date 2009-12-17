@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="prefs.js"></script>
+<script src="defaults.js"></script>
+<script>
+function domain_of(url) {
+  return url.match(/:\/\/(.+?)\//)[1];
+}
+
+function is_domain_active(url) {
+  return get_pref("active-" + domain_of(url), get_pref("default-active", true));
+}
+
+function update_page_icon(tab_id) {
+  chrome.tabs.get(tab_id, function(tab) {
+    if (tab.status != "complete") { return; }
+    if (!tab.url) { return; }
+    if (!tab.url.match(/https?:\/\//)) { return; }
+    var is_active = is_domain_active(tab.url);
+    chrome.pageAction.setIcon({tabId: tab_id, path: is_active ? "icon-enabled.png" : "icon-disabled.png"});
+    chrome.pageAction.setTitle({tabId: tab_id, title: (is_active ? "Overriding page styles on " : "Allowing page styles on ") + domain_of(tab.url)});
+    chrome.pageAction.show(tab_id);
+  });
+}
+
+function build_custom_css() {
+  var css = "";
+  var generic_fonts = get_pref("generic-fonts", default_generic_fonts);
+  var colors = get_pref("colors", default_colors_option);
+  var custom_text_color, custom_background_color;
+  if (colors == "system") {
+    custom_text_color = "WindowText";
+    custom_background_color = "Window";
+    colors = "custom";
+  } else {
+    custom_text_color = get_pref("custom-text-color", default_custom_text_color);
+    custom_background_color = get_pref("custom-background-color", default_custom_background_color);
+  }
+  var underline_links = get_pref("underline-links", default_underline_links);
+  var links = get_pref("links", default_link_colors_option);
+  var custom_link_color = get_pref("custom-link-color", default_custom_link_color);
+  var custom_visited_color = get_pref("custom-visited-color", default_custom_visited_color);
+
+  if (colors == "custom") {
+    css = css + "html > body, html > body * {" +
+                "  background-color: " + custom_background_color + " !important;" +
+                "  color: " + custom_text_color + " !important;" +
+                "  text-shadow: 0 !important;" +
+                "  -webkit-text-fill-color: none !important;" +
+                "  -webkit-text-stroke: 0 !important;" +
+                "}" +
+                "html > body, html > body *:not([onclick]):not(:link):not(:visited) {" +
+                "  background-image: none !important;" +
+                "}";
+  }
+
+  if (underline_links) {
+    css = css + "html > body a:link, html > body a:visited, html > body a:hover, html > body a:active," +
+                "html > body a:link *, html > body a:visited *, html > body a:hover *, html > body a:active * {" +
+                "  text-decoration: underline !important;" +
+                "  border-bottom: 0 !important;" +
+                "}";
+  }
+
+  if (links == "custom") {
+    css = css + "html > body a:link, html > body a:link *," +
+                "html > body a:link:hover, html > body a:link:hover *," +
+                "html > body a:link:active, html > body a:link:active * {" +
+                "  color: " + custom_link_color + " !important;" +
+                "}" +
+                "html > body a:visited, html > body a:visited *," +
+                "html > body a:visited:hover, html > body a:visited:hover *," +
+                "html > body a:visited:active, html > body a:visited:active * {" +
+                "  color: " + custom_visited_color + " !important;" +
+                "}";
+  }
+
+  if (generic_fonts) {
+    css = css + "html > body, html > body * {" +
+                "  font-family: sans-serif !important;" +
+                "}" +
+                "html > body code, html > body kbd, html > body listing, html > body plaintext, html > body pre, html > body samp, html > body tt, html > body xmp," +
+                "html > body code *, html > body kbd *, html > body listing *, html > body plaintext *, html > body pre *, html > body samp *, html > body tt *, html > body xmp * {" +
+                "  font-family: monospace !important;" +
+                "}" +
+                "html > body h1, html > body h2, html > body h3, html > body h4, html > body h5, html > body h6," +
+                "html > body h1 *, html > body h2 *, html > body h3 *, html > body h4 *, html > body h5 *, html > body h6 * {" +
+                "  font-family: serif !important;" +
+                "}";
+  }
+
+  return css;
+}
+
+chrome.tabs.onSelectionChanged.addListener(update_page_icon);
+chrome.tabs.onUpdated.addListener(update_page_icon);
+chrome.tabs.getSelected(null, update_page_icon);
+chrome.pageAction.onClicked.addListener(function(tab) {
+  var is_active = !is_domain_active(tab.url);
+  set_pref("active-" + domain_of(tab.url), is_active);
+  if (is_active) {
+    chrome.tabs.sendRequest(tab.id, "activate");
+  } else {
+    chrome.tabs.sendRequest(tab.id, "deactivate");
+  }
+  update_page_icon(tab.id);
+});
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+  if (request.id == "is-active") {
+    sendResponse({response: is_domain_active(request.url)});
+  } else if (request.id == "get-css") {
+    sendResponse({response: build_custom_css()});
+  }
+});
+</script>
+</head>
+<body>
+</body>
+</html>

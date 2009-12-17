@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PlainClothes Options</title>
+<script src="prefs.js"></script>
+<script src="defaults.js"></script>
+<script src="color-names.js"></script>
+<script src="jquery-1.3.2.min.js"></script>
+<script src="colorpicker/js/colorpicker.js"></script>
+<link rel="stylesheet" href="colorpicker/css/colorpicker.css" type="text/css">
+<style>
+.colorpicker {
+	background-image: url(colorpicker/images/custom_background.png);
+	position: absolute;
+	bottom: 0;
+	left: 0;
+}
+.colorpicker_hue div {
+	background-image: url(colorpicker/images/custom_indic.gif);
+}
+.colorpicker_hex {
+	background-image: url(colorpicker/images/custom_hex.png);
+}
+.colorpicker_rgb_r {
+	background-image: url(colorpicker/images/custom_rgb_r.png);
+}
+.colorpicker_rgb_g {
+	background-image: url(colorpicker/images/custom_rgb_g.png);
+}
+.colorpicker_rgb_b {
+	background-image: url(colorpicker/images/custom_rgb_b.png);
+}
+.colorpicker_hsb_s {
+	background-image: url(colorpicker/images/custom_hsb_s.png);
+	display: none;
+}
+.colorpicker_hsb_h {
+	background-image: url(colorpicker/images/custom_hsb_h.png);
+	display: none;
+}
+.colorpicker_hsb_b {
+	background-image: url(colorpicker/images/custom_hsb_b.png);
+	display: none;
+}
+.colorpicker_submit {
+	background-image: url(colorpicker/images/custom_submit.png);
+}
+.colorpicker input {
+	color: #778398;
+}
+
+body {
+  font-family: sans-serif;
+}
+
+h1 {
+  text-align: center;
+  font-family: serif;
+  margin-bottom: 0.25em;
+}
+
+h2 {
+  margin-top: 0;
+  text-align: center;
+  font-size: 100%;
+  font-weight: normal;
+}
+
+form {
+  margin: 2em auto;
+  width: 640px;
+}
+
+.cpicker {
+  text-transform: uppercase;
+}
+
+.textlabel {
+  display: block;
+  float: left;
+  width: 8em;
+}
+
+.subcontainer {
+  margin-left: 3em;
+}
+
+.sample {
+  float: right;
+  width: 50%;
+  padding: 1.4em 1em 1em 1em;
+  margin: 0 0 0 1em;
+  border-radius: 0.5em;
+}
+
+#visited-link, #unvisited-link {
+  cursor: pointer;
+}
+
+button {
+  float: right;
+  margin-left: 1em;
+}
+
+.tip {
+  margin-left: 2em;
+  font-size: smaller;
+}
+</style>
+</head>
+<body>
+<header>
+<hgroup>
+<h1>PlainClothes</h1>
+<h2>unstyle the web</h2>
+</hgroup>
+</header>
+<form>
+<fieldset>
+<legend>Text and Background</legend>
+<p style="padding-bottom:1em"><label><input type="checkbox" id="generic-fonts"> Always use default fonts</label><br><span class="tip">You can change these in <b>Wrench menu > Options > Under the Hood > Change font and language settings</b></span></p>
+<p id="colors-sample" class="sample">Custom text colors preview:<br><br>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vitae turpis ac ligula tristique venenatis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+<p><label><input type="radio" id="use-page-colors" name="colors" value="page"> Allow websites to set text colors</label></p>
+<p><label><input type="radio" id="use-system-colors" name="colors" value="system"> Use system colors</label></p>
+<p><label><input type="radio" id="use-custom-colors" name="colors" value="custom"> Use these colors:</label></p>
+<div class="subcontainer">
+<p><label class="textlabel" for="text-color">Text:</label> <input type="text" class="cpicker" size="6" id="text-color"></p>
+<p><label class="textlabel" for="background-color">Background:</label> <input type="text" class="cpicker" size="6" id="background-color"></p>
+</div>
+</fieldset>
+<br>
+<fieldset>
+<legend>Links</legend>
+<p style="padding-bottom:1em"><label><input type="checkbox" id="underline-links"> Always underline links</label></p>
+<p id="links-sample" class="sample">Custom link colors preview:<br><br><span id="unvisited-link">Unvisited links will look like this</span><br><br><span id="visited-link">Visited links will look like this</span></p>
+<p><label><input type="radio" id="use-page-link-colors" name="links" value="page"> Allow websites to set link colors</label></p>
+<p><label><input type="radio" id="use-custom-link-colors" name="links" value="custom"> Use these link colors:</label></p>
+<div class="subcontainer">
+<p><label class="textlabel" for="link-color">Unvisited links:</label> <input type="text" class="cpicker" size="6" id="link-color"></p>
+<p><label class="textlabel" for="visited-color">Visited links:</label> <input type="text" class="cpicker" size="6" id="visited-color"></p>
+</div>
+</fieldset>
+<br>
+<button id="close">Close</button> <button id="save" disabled>Save</button>
+</form>
+<script>
+var can_save = false;
+var last_wad;
+
+function set_radio(name, value) {
+  $("input[name='" + name + "']").each(function() {
+    $(this).attr("checked", $(this).val() == value);
+  });
+}
+
+function get_radio(name) {
+  return $("input:radio[name='" + name + "']:checked").val();
+}
+
+function set_checkbox(id, value) {
+  $("#" + id).attr("checked", value ? "checked" : "");
+}
+
+function get_checkbox(id) {
+  return $("#" + id).val() == "on" ? true : false;
+}
+
+function get_color_from_value(value) {
+  return color_name_to_value[value.toLowerCase()] || ("#" + value.pad(6, "0")).toUpperCase();
+}
+
+function get_color(id) {
+  return get_color_from_value($("#" + id).val());
+}
+
+function set_color(id, value) {
+  $("#" + id).val(value.replace(/#/, "").pad(6, "0"));
+}
+
+function save() {
+  var wad = get_radio("colors") + "|" + get_radio("links") + "|" + get_color("text-color") + "|" +
+            get_color("background-color") + "|" + get_checkbox("generic-fonts") + "|" +
+            get_color("link-color") + "|" + get_color("visited-color") + "|" +
+            get_checkbox("underline-links");
+  if (!can_save) { 
+    last_wad = wad;
+    return;
+  }
+  set_pref("colors", get_radio("colors"));
+  set_pref("links", get_radio("links"));
+  set_pref("custom-text-color", get_color("text-color"));
+  set_pref("custom-background-color", get_color("background-color"));
+  set_pref("generic-fonts", get_checkbox("generic-fonts"));
+  set_pref("custom-link-color", get_color("link-color"));
+  set_pref("custom-visited-color", get_color("visited-color"));
+  set_pref("underline-links", get_checkbox("underline-links"));
+
+  if (last_wad && (last_wad != wad)) {
+    $("#save").html("Autosaved");
+  }
+  last_wad = wad;
+
+  chrome.windows.getAll({populate: true}, function(windows) {
+    for (var w = 0; w < windows.length; w++) {
+      var _window = windows[w];
+      for (var t = 0; t < _window.tabs.length; t++) {
+        var _tab = _window.tabs[t];
+        chrome.tabs.sendRequest(_tab.id, "refresh");
+      }
+    }
+  });
+}
+
+function update_text_colors_sample() {
+  var text_color = get_color("text-color");
+  $("#text-color").attr("title", color_value_to_name[text_color] || "");
+  var background_color = get_color("background-color");
+  $("#background-color").attr("title", color_value_to_name[background_color] || "");
+  var colors = get_radio("colors");
+  if (colors == "custom") {
+    $("#colors-sample").show();
+  } else {
+    $("#colors-sample").hide();
+  }
+  $(".sample").css({"color": text_color, "background-color": background_color});
+
+  save();
+}
+
+function update_link_colors_sample() {
+  var link_color = get_color("link-color");
+  $("#link-color").attr("title", color_value_to_name[link_color] || "");
+  var visited_color = get_color("visited-color");
+  $("#visited-color").attr("title", color_value_to_name[visited_color] || "");
+  var links = get_radio("links");
+  if (links == "custom") {
+    $("#visited-link").css({"color": visited_color, "text-decoration": "underline"});
+    $("#unvisited-link").css({"color": link_color, "text-decoration": "underline"});
+    $("#links-sample").show();
+  } else {
+    $("#links-sample").hide();
+  }
+
+  save();
+}
+
+$(document).ready(function() {
+  /* set up autosave/autopreview onchange for radio buttons and checkboxes */
+  $("#use-page-colors, #use-system-colors, #use-custom-colors").click(update_text_colors_sample);
+  $("#use-page-link-colors, #use-custom-link-colors").click(update_link_colors_sample);
+  $("#generic-fonts, #underline-links").click(save);
+
+  /* set up color pickers */
+  $("#text-color, #background-color").ColorPicker({
+    /* this one is for choosing text and background colors */
+    onSubmit: function(hsb, hex, rgb, el) {
+      $(el).val(hex);
+      $(el).ColorPickerHide();
+      set_radio("colors", "custom");
+      update_text_colors_sample();
+    },
+    onBeforeShow: function () {
+      $(this).ColorPickerSetColor(this.value);
+    }
+  }).bind('keyup', function() {
+    $(this).ColorPickerSetColor(get_color_from_value(this.value));
+    set_radio("colors", "custom");
+    update_text_colors_sample();
+  });
+  $("#link-color, #visited-color").ColorPicker({
+    /* this one is for choosing visited and unvisited link colors */
+    onSubmit: function(hsb, hex, rgb, el) {
+      $(el).val(hex);
+      $(el).ColorPickerHide();
+      set_radio("links", "custom");
+      update_link_colors_sample();
+    },
+    onBeforeShow: function () {
+      $(this).ColorPickerSetColor(this.value);
+    }
+  }).bind('keyup', function() {
+    $(this).ColorPickerSetColor(get_color_from_value(this.value));
+    set_radio("links", "custom");
+    update_link_colors_sample();
+  });
+  $("input.cpicker").bind('blur', function() {
+    var val = $(this).val();
+    if (val) {
+      val = val.toLowerCase();
+    }
+    if (val) {
+      val = color_name_to_value[val];
+    }
+    if (val) {
+      $(this).val(val.replace(/^#/, ""));
+      update_text_colors_sample();
+      update_link_colors_sample();
+    }
+  });
+  $("input, button, a").bind('focus', function() {
+    $("input.cpicker").each(function() {
+      $(this).ColorPickerHide();
+    });
+    $(this).ColorPickerShow();
+  });
+
+  set_checkbox("generic-fonts", get_pref("generic-fonts", default_generic_fonts));
+  set_radio("colors", get_pref("colors", default_colors_option));
+  set_color("text-color", get_pref("custom-text-color", default_custom_text_color));
+  set_color("background-color", get_pref("custom-background-color", default_custom_background_color));
+  set_checkbox("underline-links", get_pref("underline-links", default_underline_links));
+  set_radio("links", get_pref("links", default_link_colors_option));
+  set_color("link-color", get_pref("custom-link-color", default_custom_link_color));
+  set_color("visited-color", get_pref("custom-visited-color", default_custom_visited_color));
+  update_text_colors_sample();
+  update_link_colors_sample();
+  $("#close").click(function() {
+    window.close();
+    return false;
+  });
+
+  save();
+  can_save = true;
+});
+
+String.prototype.pad = function(n, padder) {
+  var a = this.split('');
+  for (var i = 0; i < n - this.length; i++) {
+    a.unshift(padder);
+  };
+  return a.join('');
+};
+</script>
+</body>
+</html>

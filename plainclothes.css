@@ -1,0 +1,52 @@
+/* NOTE: this file is not used anymore, except for debugging.
+   Styles are now constructed dynamically in background.html::build_custom_css() */
+
+/* colors */
+
+body, body * {
+  background-color: white !important;
+  color: black !important;
+  text-shadow: 0 !important;
+  -webkit-text-fill-color: none !important;
+  -webkit-text-stroke: 0 !important;
+}
+
+body, body *:not([onclick]):not(:link):not(:visited) {
+  background-image: none !important;
+}
+
+/* links */
+
+a:link, a:visited, a:hover, a:active,
+a:link *, a:visited *, a:hover *, a:active * {
+  text-decoration: underline !important;
+  border-bottom: 0 !important;
+}
+
+a:link, a:link *,
+a:link:hover, a:link:hover *,
+a:link:active, a:link:active * {
+  color: blue !important;
+}
+
+a:visited, a:visited *,
+a:visited:hover, a:visited:hover *,
+a:visited:active, a:visited:active * {
+  color: purple !important;
+}
+
+/* fonts */
+
+body, body * {
+  font-family: sans-serif !important;
+}
+
+code, kbd, listing, plaintext, pre, samp, tt, xmp,
+code *, kbd *, listing *, plaintext *, pre *, samp *, tt *, xmp * {
+  font-family: monospace !important;
+}
+
+h1, h2, h3, h4, h5, h6,
+h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {
+  font-family: serif !important;
+}
