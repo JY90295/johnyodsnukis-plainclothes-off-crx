@@ -1,0 +1,6 @@
+#!/bin/sh
+
+version=`cat manifest.json | grep "\"version\"" | cut -d":" -f2- | cut -d"\"" -f2`
+echo "Building version $version"
+cd .. && rm -f plainclothes.zip && zip -9r plainclothes.zip plainclothes-crx/* -x plainclothes-crx/screenshot* plainclothes-crx/build plainclothes-crx/plainclothes.css && cd plainclothes-crx
+
