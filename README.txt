@@ -47,3 +47,9 @@ The options window includes code from Color Picker by Stefan Petre
 <http://www.eyecon.ro/colorpicker/> and is used under the terms of
 the MIT license.
 
+----------------------------------------------------------------------
+
+The options window includes code from jQuery by John Resig et. al.
+<http://www.jquery.com/> and is used under the terms of the MIT
+license.
+
