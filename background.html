@@ -9,7 +9,7 @@ function domain_of(url) {
 }
 
 function is_domain_active(url) {
-  return get_pref("active-" + domain_of(url), get_pref("default-active", true));
+  return get_pref("active-" + domain_of(url), get_pref("default-active", false)); // from true; jmy
 }
 
 function update_page_icon(tab_id) {
